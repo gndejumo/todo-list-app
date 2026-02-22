@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import './App.css';
 import { MdDeleteOutline } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
@@ -8,6 +8,9 @@ function App() {
   const [allTodos, setTodos] = useState([]);
   const [newTitle, setNewTitle] = useState("")
   const [newDescription, setNewDescription] = useState("")
+  const [completedTodos, setCompletedTodos] = useState([]);
+
+
 
   const handleAddTodo = ()=> {
     let newTodoItem ={
@@ -20,6 +23,53 @@ function App() {
     localStorage.setItem('todolist',JSON.stringify(updatedTodoArr))
   };
 
+  const handleDeleteTodo = (index) => {
+    let reducedTodo = [...allTodos];
+    reducedTodo.splice(index, 1);
+
+    localStorage.setItem('todolist', JSON.stringify(reducedTodo));
+    setTodos(reducedTodo);
+  }
+
+  const handleComplete = (index) => {
+    let now = new Date();
+    let dd = now.getDate();
+    let mm = now.getMonth() + 1;
+    let yyyy = now.getFullYear();
+    let h = now.getHours();
+    let m = now.getMinutes();
+    let s = now.getSeconds();
+    let completedOn = dd + '-' + mm + '-' + yyyy + ' at ' + h +':'+m+':' + s;
+    let filteredItem = {
+      ...allTodos[index],
+      completedOn:completedOn
+    }
+    let updatedCompletedArr = [...completedTodos];
+    updatedCompletedArr.push(filteredItem);
+    setCompletedTodos(updatedCompletedArr);
+    handleDeleteTodo(index);
+    localStorage.setItem('completedTodos',JSON.stringify(updatedCompletedArr))
+  }
+
+  const handleDeleteCompletedTodo = (index) => {
+    let reducedTodo = [...completedTodos];
+    reducedTodo.splice(index, 1);
+
+    localStorage.setItem('completedTodos', JSON.stringify(reducedTodo));
+    setCompletedTodos(reducedTodo);
+  }
+
+
+  useEffect(() => {
+    let savedTodo = JSON.parse(localStorage.getItem('todolist'))
+    let savedCompletedTodo = JSON.parse(localStorage.getItem('completedTodos'))
+    if(savedTodo){
+      setTodos(savedTodo);
+    }
+    if(savedCompletedTodo) {
+      setCompletedTodos(savedCompletedTodo);
+    }
+  }, [])
  
   return(
     <div className="App">
@@ -48,7 +98,7 @@ function App() {
       </div>
 
       <div className='todo-list'>
-        {allTodos.map((item, index)=>{
+        {isCompleteScreen===false && allTodos.map((item, index)=>{
           return(
             <div className="todo-list-item" key={index}>
               <div>
@@ -56,8 +106,24 @@ function App() {
                 <p>{item.description}</p>
               </div>
               <div>
-                <MdDeleteOutline className="icon" />
-                <FaCheck className="check-icon" />
+                <MdDeleteOutline className="icon" onClick ={()=> handleDeleteTodo(index)}/>
+                <FaCheck className="check-icon" onClick ={() => handleComplete(index)}/>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div className='todo-list'>
+        {isCompleteScreen===true && completedTodos.map((item, index)=>{
+          return(
+            <div className="todo-list-item" key={index}>
+              <div>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+                <p><small>Completed on: {item.completedOn}</small></p>
+              </div>
+              <div>
+                <MdDeleteOutline className="icon" onClick ={()=> handleDeleteCompletedTodo(index)}/>
               </div>
             </div>
           )
